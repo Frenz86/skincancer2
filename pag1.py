@@ -4,11 +4,14 @@ from PIL import Image
 import io
 import numpy as np
 import tensorflow as tf
+import efficientnet.tfkeras
 import requests
 from io import BytesIO
 import os
 
 import wget
+
+@st.cache
 def download_model():
     path1 = './complete_data_efficient_model.h5'
     if not os.path.exists(path1):
@@ -103,4 +106,6 @@ def main():
                         """)
         st.write(predictions)
 
+if __name__ == "__main__":
+    main()
 
