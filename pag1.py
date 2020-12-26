@@ -4,7 +4,6 @@ from PIL import Image
 import io
 import numpy as np
 import tensorflow as tf
-import efficientnet.tfkeras
 import requests
 from io import BytesIO
 import os
