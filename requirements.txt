@@ -1,5 +1,7 @@
-streamlit==0.71
-pillow
-numpy
 tensorflow==2.3.0
-requests
+pillow==6.2.0
+numpy==1.16.0
+streamlit==0.71
+wget
+datetime
+gspread
