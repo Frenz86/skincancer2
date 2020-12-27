@@ -17,8 +17,13 @@ def download_model():
     if not os.path.exists(path1):
         url = 'https://frenzy86.s3.eu-west-2.amazonaws.com/python/models/complete_data_efficient_model.h5'
         filename = wget.download(url)
+        # Loading the Model
     else:
+        # Loading the Model
         print("Model is here.")
+
+def load_model():
+    return tf.keras.models.load_model('complete_data_efficient_model.h5', compile=False)
 
 ###############################################################################
 def file_selector(folder_path='.'):
@@ -38,6 +43,8 @@ def file_selector(folder_path='.'):
     # return predictions
 
 ##### MAIN ####
+
+
 def main():
     st.button("Re-run")
     ################ load logo from web #########################
@@ -45,10 +52,10 @@ def main():
     #st.title("AI APP to predict glaucoma through fundus image of eye")
     #st.image(image, caption='',use_column_width=True)
     download_model()
-
+    model = load_model()
+    
 #######################################################################
-    # Loading the Model
-    model = tf.keras.models.load_model('complete_data_efficient_model.h5', compile=False)
+
     # Title and Description
     st.title('Melanoma Classification ')
     # Uploading Files
@@ -57,7 +64,7 @@ def main():
 
     #################################################################################
     if uploaded_file != None:  
-
+        
         # Reading the uploaded image
         image = Image.open(io.BytesIO(uploaded_file.read()))
         st.image(image,use_column_width=True)
