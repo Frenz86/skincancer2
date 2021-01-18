@@ -1,118 +1,81 @@
-# Imporiting Necessary Libraries
 import streamlit as st
-from PIL import Image
-import io
+from tflite_runtime.interpreter import Interpreter 
+from PIL import Image, ImageOps
 import numpy as np
-import tensorflow as tf
-import efficientnet.tfkeras
 import requests
-from io import BytesIO
 import os
-
+from io import BytesIO
 import wget
 
-@st.cache
+
 def download_model():
-    path1 = './complete_data_efficient_model.h5'
-    if not os.path.exists(path1):
-        url = 'https://frenzy86.s3.eu-west-2.amazonaws.com/python/models/complete_data_efficient_model.h5'
+    model_path = 'mymodel-2.tflite'
+    if not os.path.exists(model_path):
+        url = 'https://frenzy86.s3.eu-west-2.amazonaws.com/python/models/mymodel-2.tflite'
         filename = wget.download(url)
-        # Loading the Model
     else:
-        # Loading the Model
         print("Model is here.")
 
-def load_model():
-    return tf.keras.models.load_model('complete_data_efficient_model.h5', compile=False)
-
-###############################################################################
 def file_selector(folder_path='.'):
     filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('Select a file', filenames)
+    selected_filename = st.selectbox('Select a file inside images collections: ', filenames)
     return os.path.join(folder_path, selected_filename)
 
-
-# def import_and_predict(image_data, model):
-    # image = ImageOps.fit(image_data, (100,100),Image.ANTIALIAS)
-    # image = image.convert('RGB')
-    # image = np.asarray(image)
-    # st.image(image, channels='RGB')
-    # image = (image.astype(np.float32) / 255.0)
-    # img_reshape = image[np.newaxis,...]
-    # prediction = model.predict(img_reshape)
-    # return predictions
-
-##### MAIN ####
-
-
 def main():
-    st.button("Re-run")
-    ################ load logo from web #########################
-    #image = Image.open('the-biggest.jpg')
-    #st.title("AI APP to predict glaucoma through fundus image of eye")
-    #st.image(image, caption='',use_column_width=True)
+    #st.title("Eye Detection")
+    image_file = st.file_uploader("Upload Image", type = ['jpg','png','jpeg'])
     download_model()
-    model = load_model()
-    
-#######################################################################
+    model_path = 'mymodel-2.tflite'
 
-    # Title and Description
-    st.title('Melanoma Classification ')
-    # Uploading Files
-    st.markdown('## Upload Your Own image at least 1024 x 1024')
-    uploaded_file = st.file_uploader("Choose a Image file", type=["png", "jpg"])
-
-    #################################################################################
-    if uploaded_file != None:  
-        
-        # Reading the uploaded image
-        image = Image.open(io.BytesIO(uploaded_file.read()))
-        st.image(image,use_column_width=True)
-        image = image.resize((1024, 1024), Image.ANTIALIAS)
-        image = np.array(image)
-        image = image/255.0
-        image = image[np.newaxis, ...]
-
-        # Making the predictions
-        predictions = model.predict(image)
-        pred = predictions[0][0]
-        if (pred < 0.3):
-            st.write("""
-                        ## **Prediction:** Seems ok!!
-                        """)
-        else:
-            st.write("""
-                        ## **Prediction:** You have an high probability to be affected by Melanoma. Please consult a doctor as soon as possible.
-                        """
-                        )
-                        
-        st.write(predictions)
+    if image_file != None:
+        image1 = Image.open(image_file)
+        rgb_im = image1.convert('RGB') 
+        image = rgb_im.save("saved_image.jpg")
+        image_path = "saved_image.jpg"
+        st.image(image1, width = 450)
 
     else:
-        folder_path = './test/'
+        folder_path = './images/'
         filename = file_selector(folder_path=folder_path)
         st.write('You selected `%s`' % filename)
         image = Image.open(filename)
-        st.image(image,use_column_width=True)
+        image_path = filename
+        print(image_path)
+        st.image(image,width = 450)
+        #st.image(image,use_column_width=True)
 
-        image = image.resize((1024, 1024), Image.ANTIALIAS)
-        image = np.array(image)
-        image = image/255.0
-        image = image[np.newaxis, ...]
+    if st.button("Make Prediction"):
+        download_model()
+        img = Image.open(image_path)
+        ## Load model
+        interpreter = Interpreter(model_path)
+        print("Model Loaded Successfully.")
+        ## Prepare the image
+        #img = Image.open("img/test.jpg")
+        image = ImageOps.fit(img, (128,128),Image.ANTIALIAS)
+        image = image.convert('RGB')
+        image = np.asarray(image)
+        image = (image.astype(np.float32) / 255.0)
+        input_data = image[np.newaxis,...]
 
-        # Making the predictions
-        predictions = model.predict(image)
-        pred = predictions[0][0]
-        if (pred < 0.3):
+        ## run inference
+        interpreter.allocate_tensors()
+        inputdets = interpreter.get_input_details()
+        outputdets = interpreter.get_output_details()
+        interpreter.set_tensor(inputdets[0]['index'], input_data)
+        interpreter.invoke()
+        prediction = interpreter.get_tensor(outputdets[0]['index']) 
+        pred = prediction[0][0]
+        print(pred)     
+        if(pred > 0.53):
             st.write("""
-                        ## **Prediction:** Seems ok!!
-                        """)
+                     ## **Prediction:** Seems ok!!
+                     """
+                     )
         else:
             st.write("""
-                        ## **Prediction:** You have an high probability to be affected by Melanoma. Please consult a doctor as soon as possible.
-                        """)
-        st.write(predictions)
-
-if __name__ == "__main__":
+                     ## **Prediction:** You have an high probability to be affected by Melanoma. Please consult a doctor as soon as possible.
+                        """
+                     )
+if __name__ == '__main__':
     main()
-
