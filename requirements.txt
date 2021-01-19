@@ -1,8 +1,7 @@
-tensorflow==2.3
+streamlit==0.73
+matplotlib
 pillow
-numpy==1.16.0
-streamlit==0.71
+numpy
+https://github.com/google-coral/pycoral/releases/download/release-frogfish/tflite_runtime-2.5.0-cp36-cp36m-linux_x86_64.whl
 wget
-datetime
 gspread
-efficientnet
