@@ -67,7 +67,7 @@ def main():
         prediction = interpreter.get_tensor(outputdets[0]['index']) 
         pred = prediction[0][0]
         print(pred)     
-        if(pred > 0.52):
+        if(pred > 0.54):
             st.write("""
                      ## **Prediction:** Seems ok!!
                      """
